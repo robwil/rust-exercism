@@ -21,10 +21,8 @@ pub fn count(nucleotide: char, dna: &str) -> Result<usize, char> {
 }
 
 pub fn nucleotide_counts(dna: &str) -> Result<HashMap<char, usize>, char> {
-    let nucleotides = ['A', 'C', 'G', 'T'];
-    let mut counts: HashMap<char, usize> = HashMap::new();
-    for c in nucleotides.iter() {
-        counts.insert(*c, count(*c, dna)?);
-    }
-    Ok(counts)
+    ['A', 'C', 'G', 'T']
+        .iter()
+        .map(|c| count(*c, dna).map(|count| (*c, count)))
+        .collect()
 }
