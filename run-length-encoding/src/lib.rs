@@ -1,4 +1,9 @@
+use itertools::Itertools;
 use std::fmt::Write;
+
+pub fn encode(source: &str) -> String {
+    encode_cleaner(source)
+}
 
 fn partial_encode_rle(result: &mut String, c: char, count: usize) {
     if count == 1 {
@@ -8,7 +13,7 @@ fn partial_encode_rle(result: &mut String, c: char, count: usize) {
     }
 }
 
-pub fn encode(source: &str) -> String {
+pub fn encode_original(source: &str) -> String {
     if source.len() <= 0 {
         return String::from("");
     }
@@ -29,6 +34,36 @@ pub fn encode(source: &str) -> String {
     }
     partial_encode_rle(&mut result, prev_char, running_count);
     return result;
+}
+
+pub fn encode_cleaner(source: &str) -> String {
+    let mut result = String::new();
+    let mut chars = source.chars().peekable();
+    let mut running_count: usize = 0;
+    while let Some(current_char) = chars.next() {
+        running_count += 1;
+        // if next char is different (or None), write current batch now
+        if chars.peek() != Some(&current_char) {
+            if running_count > 1 {
+                result.push_str(&running_count.to_string());
+            }
+            result.push(current_char);
+            running_count = 0;
+        }
+    }
+    return result;
+}
+
+pub fn encode_functional(source: &str) -> String {
+    source
+        .chars()
+        .group_by(|&c| c)
+        .into_iter()
+        .map(|(c, group)| match group.count() {
+            1 => c.to_string(),
+            n => format!("{}{}", n, c),
+        })
+        .collect()
 }
 
 pub fn decode(source: &str) -> String {
