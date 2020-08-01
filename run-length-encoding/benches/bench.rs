@@ -18,25 +18,30 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         }
     }
     c.bench_function("encode - my original solution", |b| {
-        b.iter(|| {
-            rle::encode_original(black_box(
-                &huge_string
-            ))
-        })
+        b.iter(|| rle::encode_original(black_box(&huge_string)))
     });
     c.bench_function("encode - functional solution", |b| {
-        b.iter(|| {
-            rle::encode_functional(black_box(
-                &huge_string
-            ))
-        })
+        b.iter(|| rle::encode_functional(black_box(&huge_string)))
     });
     c.bench_function("encode - clean iterative solution", |b| {
-        b.iter(|| {
-            rle::encode_cleaner(black_box(
-                &huge_string
-            ))
-        })
+        b.iter(|| rle::encode_cleaner(black_box(&huge_string)))
+    });
+    c.bench_function("encode - clean & fast solution", |b| {
+        b.iter(|| rle::encode_clean_fast(black_box(&huge_string)))
+    });
+
+    let encoded_str = rle::encode_original(&huge_string);
+
+    c.bench_function("decode - my original solution", |b| {
+        b.iter(|| rle::decode_original(black_box(&encoded_str)))
+    });
+
+    c.bench_function("decode - clean iterative solution", |b| {
+        b.iter(|| rle::decode_cleaner(black_box(&encoded_str)))
+    });
+
+    c.bench_function("decode - clean & fast solution", |b| {
+        b.iter(|| rle::decode_clean_fast(black_box(&encoded_str)))
     });
 }
 
