@@ -14,7 +14,7 @@ fn partial_encode_rle(result: &mut String, c: char, count: usize) {
 }
 
 pub fn encode_original(source: &str) -> String {
-    if source.len() <= 0 {
+    if source.is_empty() {
         return String::from("");
     }
     let mut result = String::new();
@@ -33,11 +33,12 @@ pub fn encode_original(source: &str) -> String {
         }
     }
     partial_encode_rle(&mut result, prev_char, running_count);
-    return result;
+    result
 }
 
 // This is 2x slower than my original.
-// I assume this is ebcause peekable iterator uses a Vec<> under the hood which requires looping the whole string an extra time to convert/copy to Vec.
+// I assume this is because peekable iterator uses a Vec<> under the hood which requires looping the whole string an extra time to convert/copy to Vec.
+// (But I was wrong, see comments for next function)
 pub fn encode_cleaner(source: &str) -> String {
     let mut result = String::new();
     let mut chars = source.chars().peekable();
@@ -53,12 +54,13 @@ pub fn encode_cleaner(source: &str) -> String {
             running_count = 0;
         }
     }
-    return result;
+    result
 }
 
 // Attempt to get the clean-looking solution but without expensive peek iterator.
-// My first attempt was to use a byte slice so I could index into string but that was same speed as above.
-// But it turns out the peekable iterator wasn't the slow part but rather the push_str(running_count.to_string)
+// My first attempt was to use a byte slice with same approach as "encode_cleaner", but it had no speed improvement.
+// It turns out the peekable iterator wasn't the slow part but rather the pushing to the result string.
+// The use of write! here turns out to be very performant, and I was able to simplify the conditional similar to "cleaner" for a speed gain.
 pub fn encode_clean_fast(source: &str) -> String {
     let mut result = String::new();
     let source = source.as_bytes();
@@ -66,12 +68,11 @@ pub fn encode_clean_fast(source: &str) -> String {
     for i in 0..source.len() {
         running_count += 1;
         // if next char is different (or nonexistent), write current batch now
-        if i + 1 >= source.len() || source[i] != source[i+1] {
-            if running_count == 1 {
-                result.push(source[i] as char);
-            } else {
-                write!(result, "{}{}", running_count, source[i] as char).unwrap();
+        if i + 1 >= source.len() || source[i] != source[i + 1] {
+            if running_count > 1 {
+                write!(result, "{}", running_count).unwrap();
             }
+            result.push(source[i] as char);
             running_count = 0;
         }
     }
@@ -105,7 +106,7 @@ pub fn decode_original(source: &str) -> String {
             count.push(source[i]);
             i += 1;
         }
-        if count.len() > 0 {
+        if !count.is_empty() {
             let mut parsed_count = count.parse::<usize>().unwrap();
             count.clear();
             while parsed_count > 0 {
